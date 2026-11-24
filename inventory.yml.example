@@ -1,0 +1,13 @@
+all:
+  hosts:
+    # Use the exact distro names from: wsl.exe -l -q
+    MyDistro:
+      ansible_connection: wsl
+      ansible_host: MyDistro
+    AnotherDistro:
+      ansible_connection: wsl
+      ansible_host: AnotherDistro
+
+  vars:
+    # Commands run as root so apt doesn't need sudo
+    ansible_wsl_user: root
