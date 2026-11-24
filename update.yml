@@ -1,24 +1,46 @@
 ---
 - name: Update all WSL distributions
   hosts: all
-  gather_facts: false
+  gather_facts: true
+
+  vars:
+    # Options: safe, full, dist (default: safe)
+    apt_upgrade_mode: safe
 
   tasks:
+    # Debian/Ubuntu
     - name: Ensure python3-apt is installed
       raw: apt-get install -y python3-apt
       changed_when: false
       check_mode: false
+      when: ansible_os_family == "Debian"
 
     - name: Update apt cache
       apt:
         update_cache: true
+      when: ansible_os_family == "Debian"
 
-    - name: Upgrade all packages
+    - name: Upgrade packages (apt)
       apt:
-        upgrade: dist
-      register: upgrade_result
+        upgrade: "{{ apt_upgrade_mode }}"
+      register: apt_result
+      when: ansible_os_family == "Debian"
 
-    - name: Display upgraded packages
+    - name: Display upgraded packages (apt)
       debug:
-        msg: "{{ upgrade_result.stdout_lines | default(['No changes']) }}"
-      when: upgrade_result.changed
+        msg: "{{ apt_result.stdout_lines | default(['No changes']) }}"
+      when: ansible_os_family == "Debian" and apt_result.changed
+
+    # RHEL/Fedora/Rocky/Alma
+    - name: Update packages (dnf)
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      register: dnf_result
+      when: ansible_os_family == "RedHat"
+
+    - name: Display upgraded packages (dnf)
+      debug:
+        msg: "{{ dnf_result.results | default(['No changes']) }}"
+      when: ansible_os_family == "RedHat" and dnf_result.changed
